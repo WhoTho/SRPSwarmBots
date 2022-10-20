@@ -1,0 +1,47 @@
+function init() {}
+
+function step() {
+# Iteration (rid is the neighbor's id)
+neighbors.foreach(function(rid, data) {
+    log("robot ", rid, ": ",
+        "distance  = ", data.distance, ", ",
+        "azimuth   = ", data.azimuth, ", ",
+        "elevation = ", data.elevation)
+})
+ 
+# Transformation
+cartesian = neighbors.map(function(rid, data) {
+    var c = {}
+    c.x = data.distance * math.cos(data.elevation) * math.cos(data.azimuth)
+    c.y = data.distance * math.cos(data.elevation) * math.sin(data.azimuth)
+    c.z = data.distance * math.sin(data.elevation)
+
+    return c
+})
+ 
+# Reduction (accum is a table) with values x, y, and z, initialized to 0
+result = cartesian.reduce(function(rid, data, accum) {
+    accum.x = accum.x + data.x
+    accum.y = accum.y + data.y
+    accum.z = accum.z + data.z
+
+    return accum
+}, { .x = 0, .y = 0, .z = 0 })
+ 
+# Filtering
+one_meter = neighbors.filter(function(rid, data) {
+    # We assume the distance is expressed in centimeters
+    return data.distance < 100
+})
+ 
+# Listening to a topic
+neighbors.listen("", function(vid, value, rid) {
+    log("Got (", vid, ",", value, ") from robot #", rid)
+})
+ 
+ 
+# Broadcasting a value on a topic
+neighbors.broadcast("", value)
+}
+
+function destroy(){}
